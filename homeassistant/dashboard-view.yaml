@@ -1,0 +1,143 @@
+# Dashboard-Ansicht "Motorräder"
+# Einfügen: Dashboard bearbeiten → ⋮ → Raw-Konfigurationseditor → unter "views:" einfügen
+# (oder neue Ansicht → "Im YAML-Modus bearbeiten").
+
+title: Motorräder
+path: motorraeder
+icon: mdi:motorbike
+type: sections
+max_columns: 2
+sections:
+  # ------------------------------------------------------------------ KTM
+  - type: grid
+    cards:
+      - type: heading
+        heading: KTM
+        heading_style: title
+        icon: mdi:motorbike
+      - type: tile
+        entity: sensor.inspektion_ktm_status
+        name: Status
+        color: orange
+        grid_options: {columns: 6}
+      - type: tile
+        entity: sensor.inspektion_ktm_naechste
+        name: Nächste Inspektion
+        grid_options: {columns: 6}
+      - type: markdown
+        content: |
+          {% set id = 'ktm' %}
+          {% set l = 'sensor.inspektion_' ~ id ~ '_letzte' %}
+          {% set n = 'sensor.inspektion_' ~ id ~ '_naechste' %}
+          {% set s = 'sensor.inspektion_' ~ id ~ '_status' %}
+          {% macro dt(x) %}{{ (x | as_datetime).strftime('%d.%m.%Y') if x not in [none, 'unknown', 'unavailable', ''] else '–' }}{% endmacro %}
+          {% macro km(x) %}{{ '{:,}'.format(x | int).replace(',', '.') ~ ' km' if x is not none else '–' }}{% endmacro %}
+          ### {{ state_attr(l,'modell') or state_attr(l,'fahrzeug') }}
+          **Letzte Inspektion:** {{ dt(states(l)) }} · {{ km(state_attr(l,'kilometerstand')) }}
+          **Leistung:** {{ state_attr(l,'leistung') or '–' }}
+          **Händler:** {{ state_attr(l,'haendler') or '–' }}
+
+          **Nächste:** {{ dt(states(n)) }}{% if state_attr(n,'tage_bis') is not none %} (in {{ state_attr(n,'tage_bis') }} Tagen){% endif %}
+          bzw. bei {{ km(state_attr(n,'faellig_bei_km')) }}{% if state_attr(n,'rest_km') is not none %} – noch {{ km(state_attr(n,'rest_km')) }}{% endif %}
+
+          {% if state_attr(s,'rueckruf_offen') %}<ha-alert alert-type="error">Offener Rückruf – Händler kontaktieren</ha-alert>{% endif %}
+          {% if state_attr(l,'fehler') %}<ha-alert alert-type="warning">Letzter Abruf: {{ state_attr(l,'fehler') }}</ha-alert>{% endif %}
+
+          <details><summary>Alle Angaben zur letzten Inspektion</summary>
+
+          | Feld | Wert |
+          |---|---|
+          {% for k, v in (state_attr(l,'details') or {}).items() -%}
+          | {{ k }} | {{ v }} |
+          {% endfor %}
+          </details>
+
+          <details><summary>Historie</summary>
+
+          | Datum | km | Leistung |
+          |---|---|---|
+          {% for e in state_attr(l,'historie') or [] -%}
+          | {{ dt(e.datum) }} | {{ km(e.km) }} | {{ e.leistung or '–' }} |
+          {% endfor %}
+          </details>
+
+          <sub>FIN {{ state_attr(l,'fin') or '–' }} · Stand {{ dt((state_attr(l,'abgerufen_am') or '')[:10]) }}</sub>
+      - type: entities
+        entities:
+          - entity: input_number.ktm_kilometerstand
+            name: Kilometerstand eintragen
+
+  # ------------------------------------------------------------ Husqvarna
+  - type: grid
+    cards:
+      - type: heading
+        heading: Husqvarna
+        heading_style: title
+        icon: mdi:motorbike
+      - type: tile
+        entity: sensor.inspektion_husqvarna_status
+        name: Status
+        color: amber
+        grid_options: {columns: 6}
+      - type: tile
+        entity: sensor.inspektion_husqvarna_naechste
+        name: Nächste Inspektion
+        grid_options: {columns: 6}
+      - type: markdown
+        # gleicher Inhalt wie oben, nur mit id = 'husqvarna'
+        content: |
+          {% set id = 'husqvarna' %}
+          {% set l = 'sensor.inspektion_' ~ id ~ '_letzte' %}
+          {% set n = 'sensor.inspektion_' ~ id ~ '_naechste' %}
+          {% set s = 'sensor.inspektion_' ~ id ~ '_status' %}
+          {% macro dt(x) %}{{ (x | as_datetime).strftime('%d.%m.%Y') if x not in [none, 'unknown', 'unavailable', ''] else '–' }}{% endmacro %}
+          {% macro km(x) %}{{ '{:,}'.format(x | int).replace(',', '.') ~ ' km' if x is not none else '–' }}{% endmacro %}
+          ### {{ state_attr(l,'modell') or state_attr(l,'fahrzeug') }}
+          **Letzte Inspektion:** {{ dt(states(l)) }} · {{ km(state_attr(l,'kilometerstand')) }}
+          **Leistung:** {{ state_attr(l,'leistung') or '–' }}
+          **Händler:** {{ state_attr(l,'haendler') or '–' }}
+
+          **Nächste:** {{ dt(states(n)) }}{% if state_attr(n,'tage_bis') is not none %} (in {{ state_attr(n,'tage_bis') }} Tagen){% endif %}
+          bzw. bei {{ km(state_attr(n,'faellig_bei_km')) }}{% if state_attr(n,'rest_km') is not none %} – noch {{ km(state_attr(n,'rest_km')) }}{% endif %}
+
+          {% if state_attr(s,'rueckruf_offen') %}<ha-alert alert-type="error">Offener Rückruf – Händler kontaktieren</ha-alert>{% endif %}
+          {% if state_attr(l,'fehler') %}<ha-alert alert-type="warning">Letzter Abruf: {{ state_attr(l,'fehler') }}</ha-alert>{% endif %}
+
+          <details><summary>Alle Angaben zur letzten Inspektion</summary>
+
+          | Feld | Wert |
+          |---|---|
+          {% for k, v in (state_attr(l,'details') or {}).items() -%}
+          | {{ k }} | {{ v }} |
+          {% endfor %}
+          </details>
+
+          <details><summary>Historie</summary>
+
+          | Datum | km | Leistung |
+          |---|---|---|
+          {% for e in state_attr(l,'historie') or [] -%}
+          | {{ dt(e.datum) }} | {{ km(e.km) }} | {{ e.leistung or '–' }} |
+          {% endfor %}
+          </details>
+
+          <sub>FIN {{ state_attr(l,'fin') or '–' }} · Stand {{ dt((state_attr(l,'abgerufen_am') or '')[:10]) }}</sub>
+      - type: entities
+        entities:
+          - entity: input_number.husqvarna_kilometerstand
+            name: Kilometerstand eintragen
+
+  # ------------------------------------------------------------- Abruf
+  - type: grid
+    cards:
+      - type: tile
+        entity: sensor.inspektion_abruf
+        name: Letzte Synchronisierung
+      - type: button
+        name: Jetzt abrufen
+        icon: mdi:cloud-refresh
+        tap_action:
+          action: perform-action
+          perform_action: script.inspektion_jetzt_abrufen
+          confirmation:
+            text: Beide Portale jetzt abfragen? (dauert ca. 1–2 Minuten)

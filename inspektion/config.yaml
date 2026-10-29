@@ -1,0 +1,57 @@
+name: Motorrad-Inspektionen
+version: "2.1.0"
+slug: inspektion
+description: Liest monatlich die letzte Inspektion aus KTM- und Husqvarna-Portalen und stellt sie als Sensoren bereit
+url: https://github.com/GarageMan/ha-inspektion
+arch:
+  - aarch64
+  - amd64
+init: false
+startup: application
+boot: auto
+stdin: true                 # "Jetzt abrufen" per hassio.addon_stdin
+homeassistant_api: true     # Sensoren über die Core-API setzen
+map:
+  - share:rw                # Debug-Dateien unter /share/inspektion-debug
+options:
+  schedule_day: 1
+  schedule_time: "06:17"
+  max_age_days: 31
+  debug_dump: false
+  vehicles:
+    - id: ktm
+      name: KTM
+      portal: ktm_service_check
+      vin: ""
+      username: ""
+      interval_months: 12
+      interval_km: 10000
+      odometer_entity: ""
+    - id: husqvarna
+      name: Husqvarna
+      portal: husqvarna_servicebook
+      vin: ""
+      username: ""
+      password: ""
+      bike_id: ""
+      interval_months: 12
+      interval_km: 10000
+      odometer_entity: ""
+schema:
+  schedule_day: int(1,28)
+  schedule_time: match(^([01]\d|2[0-3]):[0-5]\d$)
+  max_age_days: int(1,365)
+  debug_dump: bool
+  vehicles:
+    - id: match(^[a-z0-9_]{2,20}$)
+      name: str
+      portal: list(ktm_service_check|husqvarna_servicebook|ktm_servicebook|husqvarna_service_check)
+      vin: str?
+      username: str?
+      password: password?
+      bike_id: str?
+      interval_months: int(0,60)?
+      interval_km: int(0,100000)?
+      odometer_entity: str?
+      warn_days: int(0,365)?
+      warn_km: int(0,20000)?

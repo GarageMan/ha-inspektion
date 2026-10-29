@@ -1,0 +1,19 @@
+configuration:
+  schedule_day:
+    name: Abruftag im Monat
+    description: Tag (1–28), an dem die Portale abgefragt werden.
+  schedule_time:
+    name: Abrufuhrzeit
+    description: Uhrzeit im Format HH:MM (Ortszeit).
+  max_age_days:
+    name: Maximales Datenalter (Tage)
+    description: Beim Start wird sofort abgerufen, wenn die Daten älter sind.
+  debug_dump:
+    name: Debug-Dateien schreiben
+    description: Screenshot, HTML, Text und JSON nach /share/inspektion-debug (nur zur Einrichtung).
+  vehicles:
+    name: Fahrzeuge
+    description: >-
+      Je Fahrzeug: id (z. B. ktm), name, portal, vin (FIN, für *_service_check Pflicht),
+      username (E-Mail, für *_servicebook Pflicht), password, interval_months, interval_km,
+      odometer_entity (z. B. input_number.ktm_kilometerstand).

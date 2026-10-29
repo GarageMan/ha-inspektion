@@ -1,0 +1,30 @@
+{
+  "schedule_day": 1,
+  "schedule_time": "06:17",
+  "max_age_days": 31,
+  "debug_dump": false,
+  "vehicles": [
+    {
+      "id": "ktm",
+      "name": "KTM",
+      "portal": "ktm_service_check",
+      "vin": "VBKXXXXXXXXXXXXXX",
+      "username": "",
+      "password": "KTM-KENNWORT",
+      "interval_months": 12,
+      "interval_km": 15000,
+      "odometer_entity": "input_number.ktm_kilometerstand"
+    },
+    {
+      "id": "husqvarna",
+      "name": "Husqvarna",
+      "portal": "husqvarna_servicebook",
+      "vin": "",
+      "username": "deine@email.de",
+      "password": "HUSQVARNA-KENNWORT",
+      "interval_months": 12,
+      "interval_km": 15000,
+      "odometer_entity": "input_number.husqvarna_kilometerstand"
+    }
+  ]
+}

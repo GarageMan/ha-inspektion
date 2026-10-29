@@ -1,0 +1,38 @@
+# Variante B: Add-on-Image als normaler Container auf einem anderen Server (z. B. mein-server),
+# falls der Raspberry Pi mit HAOS entlastet werden soll. Schreibt die Sensoren per
+# Long-Lived Access Token in Home Assistant.
+#
+#   cd standalone
+#   cp options.json.example options.json   # anpassen, chmod 600
+#   docker compose up -d --build
+#
+# Sofortabruf:  docker compose exec -T inspektion sh -c 'echo refresh > /proc/1/fd/0'
+#   (oder einfach: docker compose restart inspektion, wenn max_age_days unterschritten)
+
+services:
+  inspektion:
+    build: ../inspektion
+    image: inspektion-ha:2.0.0
+    container_name: inspektion
+    restart: unless-stopped
+    stdin_open: true
+    environment:
+      TZ: Europe/Berlin
+      HA_URL: http://homeassistant.local:8123
+      HA_TOKEN_FILE: /run/secrets/ha_token
+      OPTIONS_PATH: /config/options.json
+      DATA_DIR: /data
+      DEBUG_DIR: /data/debug
+      SELECTOR_OVERRIDES: /config/selectors.json
+    volumes:
+      - ./options.json:/config/options.json:ro
+      - ./data:/data
+    secrets:
+      - ha_token
+    shm_size: "256mb"
+    security_opt:
+      - no-new-privileges:true
+
+secrets:
+  ha_token:
+    file: ./ha_token.txt

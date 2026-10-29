@@ -1,0 +1,93 @@
+# Home-Assistant-Package für das Add-on "Motorrad-Inspektionen"
+# Ablage: /config/packages/inspektion.yaml
+# Voraussetzung in configuration.yaml:
+#   homeassistant:
+#     packages: !include_dir_named packages
+#
+# ANPASSEN:
+#   - ADDON_SLUG: lokal installiert = local_inspektion, aus GitHub-Repo = <hash>_inspektion
+#     (steht in der Add-on-URL: Einstellungen → Add-ons → Motorrad-Inspektionen)
+#   - notify.mobile_app_DEIN_HANDY → dein Benachrichtigungsdienst
+
+input_number:
+  ktm_kilometerstand:
+    name: KTM Kilometerstand
+    min: 0
+    max: 200000
+    step: 1
+    mode: box
+    unit_of_measurement: km
+    icon: mdi:counter
+  husqvarna_kilometerstand:
+    name: Husqvarna Kilometerstand
+    min: 0
+    max: 200000
+    step: 1
+    mode: box
+    unit_of_measurement: km
+    icon: mdi:counter
+
+script:
+  inspektion_jetzt_abrufen:
+    alias: Inspektionsdaten jetzt abrufen
+    icon: mdi:cloud-refresh
+    sequence:
+      - action: hassio.addon_stdin
+        data:
+          addon: local_inspektion
+          input: refresh
+
+automation:
+  - id: inspektion_faelligkeit_melden
+    alias: Inspektion bald fällig / überfällig melden
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id:
+          - sensor.inspektion_ktm_status
+          - sensor.inspektion_husqvarna_status
+        to:
+          - bald fällig
+          - überfällig
+    actions:
+      - action: notify.mobile_app_DEIN_HANDY
+        data:
+          title: "🔧 Inspektion {{ trigger.to_state.state }}"
+          message: >-
+            {% set id = trigger.entity_id | replace('sensor.inspektion_','') | replace('_status','') %}
+            {% set n = 'sensor.inspektion_' ~ id ~ '_naechste' %}
+            {{ state_attr(n, 'friendly_name') | replace(' – nächste Inspektion','') }}:
+            fällig am {{ as_timestamp(states(n)) | timestamp_custom('%d.%m.%Y') }}
+            {%- if state_attr(n,'rest_km') is not none %} bzw. in {{ state_attr(n,'rest_km') }} km{% endif %}.
+
+  - id: inspektion_rueckruf_melden
+    alias: Offenen Rückruf melden
+    triggers:
+      - trigger: state
+        entity_id:
+          - sensor.inspektion_ktm_status
+          - sensor.inspektion_husqvarna_status
+        attribute: rueckruf_offen
+        to: true
+    actions:
+      - action: notify.mobile_app_DEIN_HANDY
+        data:
+          title: "⚠️ Rückruf / Sicherheitsupdate"
+          message: "{{ trigger.to_state.attributes.friendly_name }}: offener Rückruf – bitte Händler kontaktieren."
+
+  - id: inspektion_abruf_fehler_melden
+    alias: Fehler beim Inspektionsabruf melden
+    triggers:
+      - trigger: state
+        entity_id:
+          - sensor.inspektion_ktm_status
+          - sensor.inspektion_husqvarna_status
+        attribute: fehler
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.to_state.attributes.fehler not in [none, ''] }}"
+    actions:
+      - action: notify.mobile_app_DEIN_HANDY
+        data:
+          title: "Inspektionsabruf fehlgeschlagen"
+          message: "{{ trigger.to_state.attributes.friendly_name }}: {{ trigger.to_state.attributes.fehler }}"

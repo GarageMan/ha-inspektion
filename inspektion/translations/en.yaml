@@ -1,0 +1,16 @@
+configuration:
+  schedule_day:
+    name: Day of month
+    description: Day (1–28) on which the portals are queried.
+  schedule_time:
+    name: Time
+    description: Local time, HH:MM.
+  max_age_days:
+    name: Maximum data age (days)
+    description: Fetch immediately on start if data is older.
+  debug_dump:
+    name: Write debug files
+    description: Screenshot, HTML, text and JSON to /share/inspektion-debug (setup only).
+  vehicles:
+    name: Vehicles
+    description: id, name, portal, vin, username, password, interval_months, interval_km, odometer_entity.
