@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.1 – 2026-10-29
+- Husqvarna-Login: E-Mail-Feld ohne Kennzeichnung (SAP-Gigya-Formular) wird über die Feldreihenfolge erkannt
+- Warten, bis das per JavaScript aufgebaute Anmeldeformular geladen ist
+- Gigya-Sitzungsdaten werden nie mitgeschnitten
+
 ## 2.1.0 – 2026-10-29
 - KTM: Abruf direkt über die Servicelookup-Schnittstelle (nur FIN, kein Kennwort, kein Browser)
 - Husqvarna: Login über /login/, Motorrad per `bike_id`, Serviceheft-Tabelle und Detailseite des jüngsten Eintrags

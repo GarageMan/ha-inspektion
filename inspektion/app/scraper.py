@@ -88,6 +88,11 @@ JS_FIELDS = """
 }
 """
 
+VISIBLE_INPUTS = (
+    "input:not([type='hidden']):not([type='checkbox']):not([type='radio'])"
+    ":not([type='submit']):not([type='button']):not([type='search']):visible"
+)
+
 JS_BIKE_LINKS = """
 () => [...document.querySelectorAll('a[href*="bikeId="]')].map(a => a.href)
 """
@@ -159,8 +164,10 @@ class _Run:
             if "json" not in (resp.headers.get("content-type") or ""):
                 return
             body = await resp.json()
-            if isinstance(body, dict) and any(k in body for k in ("access_token", "id_token", "refresh_token", "token")):
-                return  # Login-Tokens nie aufheben
+            if isinstance(body, dict) and any(k in body for k in (
+                    "access_token", "id_token", "refresh_token", "token",
+                    "sessionInfo", "login_token", "sessionToken", "sessionSecret", "UID", "UIDSignature")):
+                return  # Login-/Sitzungsdaten (u. a. Gigya) nie aufheben
             self.json.append({"url": resp.url.split("?")[0], "status": resp.status, "body": body})
         except Exception:  # noqa: BLE001
             return
@@ -227,8 +234,24 @@ async def _login(run: _Run) -> None:
     if "/login" not in page.url:
         log.info("%s: bereits angemeldet", v.id)
         return
-    user = await _first_visible(page, sel["username"], 20000)
-    pw = await _first_visible(page, sel["password"], 5000)
+    # Formular wird per JavaScript (SAP Gigya) aufgebaut – erst warten, bis Eingabefelder da sind
+    fields = page.locator(VISIBLE_INPUTS)
+    try:
+        await fields.first.wait_for(state="visible", timeout=20000)
+    except PwTimeout:
+        await run.snap("login-felder-fehlen")
+        raise ScrapeError("Anmeldeformular nicht geladen.") from None
+
+    user = await _first_visible(page, sel["username"], 2000)
+    pw = await _first_visible(page, sel["password"], 2000)
+    if not user or not pw:
+        # Rückfallebene: Die Anmeldeseite hat genau zwei Felder – 1. E-Mail, 2. Passwort.
+        # (Das E-Mail-Feld ist dort ein unbenanntes <input type="text" class="input-field">.)
+        count = await fields.count()
+        if count >= 2:
+            user = user or fields.nth(0)
+            pw = pw or fields.nth(1)
+            log.info("%s: Anmeldefelder über ihre Reihenfolge erkannt (%d Felder)", v.id, count)
     if not user or not pw:
         await run.snap("login-felder-fehlen")
         raise ScrapeError("Anmeldefelder (E-Mail/Passwort) nicht gefunden.")

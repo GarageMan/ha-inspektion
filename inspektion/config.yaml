@@ -1,5 +1,5 @@
 name: Motorrad-Inspektionen
-version: "2.1.0"
+version: "2.1.1"
 slug: inspektion
 description: Liest monatlich die letzte Inspektion aus KTM- und Husqvarna-Portalen und stellt sie als Sensoren bereit
 url: https://github.com/GarageMan/ha-inspektion

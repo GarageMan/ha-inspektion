@@ -71,9 +71,10 @@ SELECTORS: dict[str, list[str]] = {
     ],
     "username": [
         "input[type='email']", "input[name='email' i]", "input[id*='email' i]",
-        "input[name='username' i]", "input[autocomplete='username']",
+        "input[name='username' i]", "input[name='loginID' i]", "input[autocomplete='username']",
+        "input[autocomplete='email']", "input[inputmode='email']",
     ],
-    "password": ["input[type='password']"],
+    "password": ["input[type='password']", "input[autocomplete='current-password']"],
     "login_submit": [
         "button:has-text('Anmelden')", "form button[type='submit']", "input[type='submit']",
     ],
