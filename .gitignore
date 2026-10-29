@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+standalone/options.json
+standalone/ha_token.txt
+standalone/data/
