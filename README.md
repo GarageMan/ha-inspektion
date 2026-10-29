@@ -52,7 +52,8 @@ HA-Dashboard, Benachrichtigung aufs Handy, optional als Fenster auf dem Windows-
 | `repository.yaml` | Add-on-Repository (für GitHub-Installation) |
 | `inspektion/` | Das Add-on (config.yaml, Dockerfile, Python-Code, DOCS.md) |
 | `homeassistant/packages/inspektion.yaml` | km-Helfer, Skript „Jetzt abrufen“, 3 Automationen |
-| `homeassistant/dashboard-view.yaml` | Dashboard-Ansicht „Motorräder“ |
+| `homeassistant/dashboard-view.yaml` | Dashboard-Ansicht „Motorräder“ (zum Einfügen in ein bestehendes Dashboard) |
+| `homeassistant/dashboard-motorrad.yaml` | Komplettes Dashboard für den Raw-Konfigurationseditor |
 | `windows/Install-InspektionDesktop.ps1` | Desktop-Fenster + Autostart |
 | `standalone/` | Variante B: gleicher Code als Container auf mein-server |
 | `tests/` | Unit-Tests (Parser, Planer, Zeitplan) |

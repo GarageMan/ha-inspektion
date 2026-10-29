@@ -1,13 +1,14 @@
-# Home-Assistant-Package für das Add-on "Motorrad-Inspektionen"
-# Ablage: /config/packages/inspektion.yaml
+# Home-Assistant-Package für die App/das Add-on "Motorrad-Inspektionen"
+# Ablage:  /homeassistant/packages/inspektion.yaml   (Samba: \\homeassistant.local\config\packages\)
 # Voraussetzung in configuration.yaml:
 #   homeassistant:
 #     packages: !include_dir_named packages
 #
-# ANPASSEN:
-#   - ADDON_SLUG: lokal installiert = local_inspektion, aus GitHub-Repo = <hash>_inspektion
-#     (steht in der Add-on-URL: Einstellungen → Add-ons → Motorrad-Inspektionen)
-#   - notify.mobile_app_DEIN_HANDY → dein Benachrichtigungsdienst
+# ANPASSEN (einmalig):
+#   ADDON_SLUG → interner Name der App aus der Adresszeile, z. B. 96452f41_inspektion
+#               (…/config/app/96452f41_inspektion/info)
+# Benachrichtigungen landen in der Glocke "Benachrichtigungen" (persistent_notification).
+# Mit Companion-App aufs Handy: zusätzlich eine Aktion notify.mobile_app_<gerät> ergänzen.
 
 input_number:
   ktm_kilometerstand:
@@ -34,7 +35,7 @@ script:
     sequence:
       - action: hassio.addon_stdin
         data:
-          addon: local_inspektion
+          addon: ADDON_SLUG
           input: refresh
 
 automation:
@@ -50,15 +51,17 @@ automation:
           - bald fällig
           - überfällig
     actions:
-      - action: notify.mobile_app_DEIN_HANDY
+      - variables:
+          fz: "{{ trigger.entity_id | replace('sensor.inspektion_', '') | replace('_status', '') }}"
+          n: "{{ 'sensor.inspektion_' ~ fz ~ '_naechste' }}"
+      - action: persistent_notification.create
         data:
-          title: "🔧 Inspektion {{ trigger.to_state.state }}"
+          notification_id: "inspektion_{{ fz }}"
+          title: "🔧 {{ state_attr(n, 'friendly_name') | replace(' – nächste Inspektion', '') }}: Inspektion {{ trigger.to_state.state }}"
           message: >-
-            {% set id = trigger.entity_id | replace('sensor.inspektion_','') | replace('_status','') %}
-            {% set n = 'sensor.inspektion_' ~ id ~ '_naechste' %}
-            {{ state_attr(n, 'friendly_name') | replace(' – nächste Inspektion','') }}:
-            fällig am {{ as_timestamp(states(n)) | timestamp_custom('%d.%m.%Y') }}
-            {%- if state_attr(n,'rest_km') is not none %} bzw. in {{ state_attr(n,'rest_km') }} km{% endif %}.
+            Fällig am {{ as_timestamp(states(n)) | timestamp_custom('%d.%m.%Y') }}
+            {%- if state_attr(n, 'tage_bis') is not none %} (in {{ state_attr(n, 'tage_bis') }} Tagen){% endif %}
+            {%- if state_attr(n, 'faellig_bei_km') is not none %} bzw. bei {{ state_attr(n, 'faellig_bei_km') }} km{% endif %}.
 
   - id: inspektion_rueckruf_melden
     alias: Offenen Rückruf melden
@@ -70,8 +73,9 @@ automation:
         attribute: rueckruf_offen
         to: true
     actions:
-      - action: notify.mobile_app_DEIN_HANDY
+      - action: persistent_notification.create
         data:
+          notification_id: "inspektion_rueckruf_{{ trigger.entity_id }}"
           title: "⚠️ Rückruf / Sicherheitsupdate"
           message: "{{ trigger.to_state.attributes.friendly_name }}: offener Rückruf – bitte Händler kontaktieren."
 
@@ -87,7 +91,28 @@ automation:
       - condition: template
         value_template: "{{ trigger.to_state.attributes.fehler not in [none, ''] }}"
     actions:
-      - action: notify.mobile_app_DEIN_HANDY
+      - action: persistent_notification.create
         data:
+          notification_id: "inspektion_fehler_{{ trigger.entity_id }}"
           title: "Inspektionsabruf fehlgeschlagen"
           message: "{{ trigger.to_state.attributes.friendly_name }}: {{ trigger.to_state.attributes.fehler }}"
+
+  - id: inspektion_roadside_melden
+    alias: Roadside Assistance läuft bald ab
+    triggers:
+      - trigger: time
+        at: "09:00:00"
+    conditions:
+      - condition: template
+        value_template: >-
+          {% set bis = state_attr('sensor.inspektion_husqvarna_letzte', 'roadside_assistance_bis') %}
+          {{ bis is not none and ((as_timestamp(bis) - as_timestamp(today_at())) / 86400) | round(0) | int == 30 }}
+    actions:
+      - action: persistent_notification.create
+        data:
+          notification_id: inspektion_roadside
+          title: "🛟 Roadside Assistance läuft ab"
+          message: >-
+            Husqvarna: Roadside Assistance aktiv bis
+            {{ as_timestamp(state_attr('sensor.inspektion_husqvarna_letzte', 'roadside_assistance_bis')) | timestamp_custom('%d.%m.%Y') }}.
+            Zur Verlängerung bitte den Händler kontaktieren.
